@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Document</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <div class="board">
+        <div
+          class="section"
+          v-for="(item,index) in sections"
+          :key="index"
+          :class="{circle:item == 1, cross:item == 10 }"
+          @click="clickHandler(index)"
+        ></div>
+      </div>
+      <div class="name">
+        <span>
+          Player :
+        </span>
+        <div class="player">
+          <div
+            :class="{circle:step % 2 == setting.type[0], cross:step % 2 == setting.type[1]}"
+          ></div>
+        </div>
+        <div class="reset" @click="resetHandler">reset</div>
+      </div>
+
+      <transition name="fade">
+        <div class="result" v-if="winner" @click="resetHandler">
+          {{ winner }} win ! click to reset
+        </div>
+      </transition>
+
+      <div class="ask" v-if="first">
+        <div>請選擇先手</div>
+        <div style="display: flex;justify-content:center">
+          <div class="section circle mr" @click="firstHandler('circle')"></div>
+          <div class="section cross" @click="firstHandler('cross')"></div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.js"></script>
+    <script>
+      ;(function(Vue) {
+        new Vue({
+          el: '#app',
+          data() {
+            return {
+              // 順序: 圈圈是偶數，叉叉是奇數
+              step: 0,
+              // 每一個格子，裝的分數
+              // 1: 圈圈，10: 叉叉
+              sections: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+              // 先手選擇畫面
+              first: true,
+              // 遊戲設定條件
+              setting: {
+                type: [0, 1],
+                value: [1, 10]
+              }
+            }
+          },
+          computed: {
+            // 獲勝方式
+            winStatus() {
+              return [
+                this.sections[0] + this.sections[1] + this.sections[2],
+                this.sections[3] + this.sections[4] + this.sections[5],
+                this.sections[6] + this.sections[7] + this.sections[8],
+                this.sections[0] + this.sections[3] + this.sections[6],
+                this.sections[1] + this.sections[4] + this.sections[7],
+                this.sections[2] + this.sections[5] + this.sections[8],
+                this.sections[0] + this.sections[4] + this.sections[8],
+                this.sections[2] + this.sections[4] + this.sections[6]
+              ]
+            },
+            winner() {
+              let winner = null
+              // 至少下超過4次，才會分出勝負
+              if (this.step >= 4) {
+                winner =
+                  this.winStatus.find(item => item == 3 || item == 30) || null
+
+                if (winner == 3) winner = 'Circle'
+                else if (winner == 30) winner = 'Cross'
+                else if (winner == null && this.step > 8) winner = 'Nobody'
+              }
+              return winner
+            }
+          },
+          methods: {
+            clickHandler(index) {
+              if (this.sections[index] == 0) {
+                // 以陣列索引值的方式修改資料內容時，Vue 無法監測到
+                // 因此雖然資料已經代進去了，但是 Vue 不會更新
+                // vm.$set(array, index, value)
+                this.$set(
+                  this.sections,
+                  index,
+                  this.step % 2 == 0
+                    ? this.setting.value[0]
+                    : this.setting.value[1]
+                )
+                this.step++
+              }
+            },
+            resetHandler() {
+              this.step = 0
+              this.sections = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+              this.first = !this.first
+            },
+            firstHandler(param) {
+              if (param == 'circle') {
+                // 交換: 圈圈是偶數，叉叉是奇數
+                this.setting.type = [0, 1]
+                this.setting.value = [1, 10]
+              } else {
+                // 交換: 圈圈是奇數，叉叉是偶數
+                this.setting.type = [1, 0]
+                this.setting.value = [10, 1]
+              }
+              this.first = !this.first
+            }
+          }
+        })
+      })(Vue)
+    </script>
+  </body>
+</html>
